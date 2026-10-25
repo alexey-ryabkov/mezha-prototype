@@ -6,6 +6,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   base: '/mezha-prototype/',
   plugins: [react(), tailwindcss()],
+  build: { chunkSizeWarningLimit: 1000 },
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

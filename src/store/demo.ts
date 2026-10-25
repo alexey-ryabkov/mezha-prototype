@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware"
 import { DEMO } from "@/data/demo"
 import type { Billing, Lead, JournalEntry, Plot, Settings } from "@/data/types"
 import type { Role } from "@/data/village"
+import { nowStamp } from "@/lib/time"
 
 // Версия берется из демо-данных: после их перегенерации сохраненное в браузере состояние сбросится
 const DATA_VERSION = DEMO.meta.version
@@ -21,6 +22,7 @@ type DemoState = DemoData & {
   login: (role: Role) => void
   logout: () => void
   reset: () => void
+  addLead: (lead: Omit<Lead, "id" | "at">) => void
 }
 
 const initialData = (): DemoData =>
@@ -40,6 +42,10 @@ export const useDemo = create<DemoState>()(
       login: (user) => set({ user }),
       logout: () => set({ user: null }),
       reset: () => set(initialData()),
+      addLead: (lead) =>
+        set((s) => ({
+          leads: [{ ...lead, id: Math.max(0, ...s.leads.map((l) => l.id)) + 1, at: nowStamp() }, ...s.leads],
+        })),
     }),
     {
       name: "mezha-demo",

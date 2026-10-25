@@ -15,7 +15,7 @@ export function LoginPage() {
   const login = useDemo((s) => s.login)
 
   if (role !== "owner" && role !== "manager") return <Navigate to="/" replace />
-  if (user === role) return <Navigate to="/cabinet" replace />
+  if (user === role) return <Navigate to="/cabinet/plots" replace />
 
   const account = USERS[role as Role]
 
@@ -32,7 +32,7 @@ export function LoginPage() {
             onSubmit={(e) => {
               e.preventDefault()
               login(role as Role)
-              navigate("/cabinet")
+              navigate("/cabinet/plots")
             }}
           >
             <div className="grid gap-2">

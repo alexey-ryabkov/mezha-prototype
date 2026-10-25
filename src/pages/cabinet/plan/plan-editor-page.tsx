@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ImageUp, PenLine, Send, Trash2, X } from "lucide-react"
+import { ImageUp, PenLine, Plus, Send, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { GenplanView } from "@/components/genplan/genplan-view"
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DEMO } from "@/data/demo"
 import type { Outline, Plot } from "@/data/types"
 import { formatDateTime, formatSotki } from "@/lib/format"
@@ -26,7 +27,11 @@ export function PlanEditorPage() {
   const publishedAt = useDemo((s) => s.settings.publishedAt)
   const schemaChangedAt = useDemo((s) => s.schemaChangedAt)
   const paid = useDemo((s) => isPaid(s.billing))
-  const { assignContour, createPlot, deletePlot, publish } = useDemo.getState()
+  const queues = useDemo((s) => s.queues)
+  const { assignContour, createPlot, deletePlot, publish, addQueue } = useDemo.getState()
+  // Ф-25: выбранная очередь, участки других очередей бледнеют
+  const [queue, setQueue] = useState<number | "all">("all")
+  const inQueue = (p: Plot) => queue === "all" || p.queue === queue
 
   const [mode, setMode] = useState<Mode>("view")
   const [pickId, setPickId] = useState<number | null>(null)
@@ -35,7 +40,7 @@ export function PlanEditorPage() {
   const [replaceOpen, setReplaceOpen] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
 
-  const noContour = plots.filter((p) => !p.contour).sort(byNumber)
+  const noContour = plots.filter((p) => !p.contour && inQueue(p)).sort(byNumber)
   const used = new Set(plots.map((p) => contourKey(p.contour)))
   const freeOutlines = DEMO.outlines.filter((o) => !used.has(o.contour[0].join()))
   const picked = plots.find((p) => p.id === pickId)
@@ -54,7 +59,7 @@ export function PlanEditorPage() {
     } else {
       id = createPlot({
         number: o.number,
-        queue: 2,
+        queue: queue === "all" ? Math.max(...queues) : queue,
         areaM2: o.areaM2,
         price: 0,
         status: "free",
@@ -100,6 +105,31 @@ export function PlanEditorPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <Tabs value={String(queue)} onValueChange={(v) => setQueue(v === "all" ? "all" : Number(v))}>
+          <TabsList>
+            <TabsTrigger value="all">Все очереди</TabsTrigger>
+            {queues.map((q) => (
+              <TabsTrigger key={q} value={String(q)}>
+                {q} очередь
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            const q = addQueue()
+            setQueue(q)
+            toast.success(`Добавлена ${q} очередь. Загрузите для нее подложку или обведите участки на текущей.`)
+          }}
+        >
+          <Plus />
+          Добавить очередь
+        </Button>
+      </div>
+
       {mode !== "view" && (
         <div
           className={cn(
@@ -126,6 +156,7 @@ export function PlanEditorPage() {
           <PlanCanvas>
             <GenplanView
               plots={plots}
+              dimmed={queue === "all" ? undefined : (p) => !inQueue(p)}
               selectedId={editId}
               onPlotClick={mode === "outline" ? undefined : (p) => (mode === "delete" ? setDeleteId(p.id) : setEditId(p.id))}
               outlines={mode === "outline" ? freeOutlines : undefined}

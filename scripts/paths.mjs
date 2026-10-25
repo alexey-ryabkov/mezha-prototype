@@ -1,18 +1,22 @@
 // Прогон пяти сквозных путей из ТЗ на телефоне и на компьютере.
-// BASE — адрес прототипа (по умолчанию опубликованный), SHOTS — папка для скриншотов (если нужны).
+// BASE — адрес прототипа (по умолчанию опубликованный), SHOTS — папка для скриншотов (если нужны),
+// DEVICE — только phone или только desktop. Рядом со скриншотами пишется их описание screens.json.
 // Запуск: node scripts/paths.mjs [номер пути ...]
-import { mkdirSync } from "node:fs"
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { chromium } from "playwright"
+
+import { PATHS_META } from "./paths-meta.mjs"
 
 const BASE = process.env.BASE ?? "https://alexey-ryabkov.github.io/mezha-prototype/"
 const SHOTS = process.env.SHOTS
 const ONLY = process.argv.slice(2).map(Number)
 
+// Для скриншотов в презентацию плотность выше: телефон 3x, компьютер 2x
 const DEVICES = {
-  phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
-  // Для скриншотов в презентацию компьютер снимается с удвоенной плотностью
-  desktop: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: process.env.SHOTS ? 2 : 1 },
+  phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: SHOTS ? 3 : 2, isMobile: true, hasTouch: true },
+  desktop: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: SHOTS ? 2 : 1 },
 }
+const RUN_DEVICES = process.env.DEVICE ? [process.env.DEVICE] : Object.keys(DEVICES)
 
 if (SHOTS) mkdirSync(SHOTS, { recursive: true })
 
@@ -41,6 +45,8 @@ async function session(browser, device, name) {
     shot: async (label, { keepToast = false } = {}) => {
       if (!SHOTS) return
       shot++
+      // Курсор уходит в угол, чтобы на плане не было обводки участка под ним
+      if (!mobile) await page.mouse.move(0, 0)
       await page.waitForTimeout(350)
       const hide = [
         // Кнопка демонстрации не часть интерфейса «Межи», ее видно только там, где по ней переходят
@@ -91,7 +97,8 @@ const paths = {
     await page.keyboard.press("PageDown")
     await page.keyboard.press("ArrowLeft")
     await s.wait(200)
-    await s.shot("filter")
+    // На компьютере фильтр стоит над планом, и этот кадр совпал бы со следующим
+    if (s.mobile) await s.shot("filter")
     if (s.mobile) await s.tap(scope.getByRole("button", { name: /^Показать/ }))
     await s.wait()
     expect(await page.getByText("подходит 9 участков").locator("visible=true").first().isVisible(), "нет надписи «подходит 9 участков»")
@@ -136,6 +143,12 @@ const paths = {
     await s.tap(row.getByRole("combobox"))
     await s.wait(300)
     await s.tap(page.getByRole("option", { name: "забронирован" }))
+    await s.wait(500)
+    // Ф-19: срок брони и комментарий
+    const dialog = page.getByRole("dialog")
+    await dialog.getByLabel("Комментарий").fill("Покупатель Сергей, показ в субботу")
+    await s.shot("booking")
+    await s.tap(dialog.getByRole("button", { name: "Забронировать" }))
     await s.wait(500)
     await s.shot("booked", { keepToast: true })
     await s.tap(page.getByRole("button", { name: "Навигация демонстрации" }))
@@ -190,7 +203,7 @@ const paths = {
     await s.login("owner")
     await s.nav("Статистика")
     await s.shot("stats")
-    const hot = page.locator("tr", { hasText: "смотрят без заявок" }).first()
+    const hot = page.locator(s.mobile ? "main li" : "tr", { hasText: "смотрят без заявок" }).first()
     const number = (await hot.getByRole("button", { name: /№/ }).innerText()).replace("№ ", "")
     await s.tap(hot.getByRole("button", { name: /№/ }))
     await s.wait(500)
@@ -203,7 +216,7 @@ const paths = {
     expect(await page.getByText("2 600 000 ₽").locator("visible=true").first().isVisible(), "новая цена не видна")
     await s.shot("price", { keepToast: true })
     await s.nav("Журнал")
-    const first = page.locator("tbody tr").first()
+    const first = s.mobile ? page.locator("main li").first() : page.locator("tbody tr").first()
     const text = (await first.innerText()).replace(/\s+/g, " ")
     expect(text.includes(`№ ${number}`) && text.includes("2 600 000"), "записи в журнале нет")
     await s.shot("journal")
@@ -227,7 +240,7 @@ const browser = await chromium.launch()
 const results = []
 for (const n of Object.keys(paths).map(Number)) {
   if (ONLY.length && !ONLY.includes(n)) continue
-  for (const device of Object.keys(DEVICES)) {
+  for (const device of RUN_DEVICES) {
     const s = await session(browser, device, `path${n}`)
     try {
       await paths[n](s)
@@ -242,4 +255,38 @@ for (const n of Object.keys(paths).map(Number)) {
 await browser.close()
 
 for (const r of results) console.log(`путь ${r.path} ${r.device.padEnd(7)} ${r.ok ? "ok" : "FAIL"} ${r.note}`)
+
+// Описание всех скриншотов в папке, в том числе снятых раньше
+if (SHOTS) {
+  const size = (file) => {
+    const b = readFileSync(`${SHOTS}/${file}`)
+    return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }
+  }
+  const screens = readdirSync(SHOTS)
+    .map((file) => file.match(/^path(\d)-(phone|desktop)-(\d+)-(.+)\.png$/))
+    .filter(Boolean)
+    .map(([file, n, device, step, label]) => {
+      const meta = PATHS_META[n].screens[label] ?? {}
+      return { file, path: Number(n), device, step: Number(step), label, ...meta, ...size(file) }
+    })
+    .sort((a, b) => a.path - b.path || a.device.localeCompare(b.device) || a.step - b.step)
+  const paths = Object.entries(PATHS_META).map(([id, { screens: _screens, ...rest }]) => ({ id: Number(id), ...rest }))
+  writeFileSync(
+    `${SHOTS}/screens.json`,
+    JSON.stringify(
+      {
+        prototype: BASE,
+        devices: {
+          phone: "телефон, экран 390×844, снят в 3x",
+          desktop: "компьютер, экран 1440×900, снят в 2x",
+        },
+        paths,
+        screens,
+      },
+      null,
+      2,
+    ) + "\n",
+  )
+  console.log(`screens.json: ${screens.length} скриншотов`)
+}
 process.exit(results.every((r) => r.ok) ? 0 : 1)

@@ -1,7 +1,8 @@
-import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router"
+import { Link, Navigate, useLocation, useNavigate } from "react-router"
 import { LogOut } from "lucide-react"
 
 import { Logo } from "@/components/brand/logo"
+import { DeferredOutlet } from "@/components/common/deferred-outlet"
 import {
   Sidebar,
   SidebarContent,
@@ -44,7 +45,7 @@ export function CabinetLayout() {
           <span className="ml-auto truncate text-sm text-muted-foreground md:hidden">{village.name}</span>
         </header>
         <main className="flex-1 p-4 md:p-6">
-          <Outlet />
+          <DeferredOutlet key={current?.path ?? pathname} />
         </main>
       </SidebarInset>
     </SidebarProvider>

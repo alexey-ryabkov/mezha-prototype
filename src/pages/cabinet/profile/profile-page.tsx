@@ -284,48 +284,33 @@ function BillingSection() {
         Сформировать счет
       </Button>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 font-normal">Месяц</th>
-            <th className="py-2 font-normal">Сумма</th>
-            <th className="py-2 font-normal">Статус</th>
-            <th className="py-2" />
-          </tr>
-        </thead>
-        <tbody>
-          {[...billing.invoices].reverse().map((i) => (
-            <tr key={i.id} className="border-b last:border-0">
-              <td className="py-2">
-                <button type="button" onClick={() => setOpen(i)} className="text-primary underline-offset-2 hover:underline">
-                  {formatMonth(i.month)}
-                </button>
-              </td>
-              <td className="py-2 tabular-nums">{formatPrice(i.amount)}</td>
-              <td className="py-2">
-                {i.status === "paid" ? (
-                  <span className="text-muted-foreground">оплачен</span>
-                ) : (
-                  <span className="font-medium text-destructive">ожидает оплаты</span>
-                )}
-              </td>
-              <td className="py-2 text-right">
-                {i.status === "pending" && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      payInvoice(i.id)
-                      toast.success(`Оплата получена, подписка активна до ${formatDate(useDemo.getState().billing.paidUntil)}`)
-                    }}
-                  >
-                    Оплатить
-                  </Button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="divide-y border-y text-sm">
+        {[...billing.invoices].reverse().map((i) => (
+          <li key={i.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5">
+            <button type="button" onClick={() => setOpen(i)} className="w-28 text-left text-primary underline-offset-2 hover:underline">
+              {formatMonth(i.month)}
+            </button>
+            <span className="whitespace-nowrap tabular-nums">{formatPrice(i.amount)}</span>
+            {i.status === "paid" ? (
+              <span className="text-muted-foreground">оплачен</span>
+            ) : (
+              <span className="font-medium whitespace-nowrap text-destructive">ожидает оплаты</span>
+            )}
+            {i.status === "pending" && (
+              <Button
+                size="sm"
+                className="ml-auto"
+                onClick={() => {
+                  payInvoice(i.id)
+                  toast.success(`Оплата получена, подписка активна до ${formatDate(useDemo.getState().billing.paidUntil)}`)
+                }}
+              >
+                Оплатить
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
 
       <InvoiceDialog invoice={open} billing={billing} village={village} onClose={() => setOpen(null)} />
     </Section>

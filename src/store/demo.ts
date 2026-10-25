@@ -8,7 +8,7 @@ import { nowStamp } from "@/lib/time"
 
 // Версия берется из демо-данных: после их перегенерации сохраненное в браузере состояние сбросится.
 // STATE_SHAPE увеличивается, когда меняется набор полей хранилища.
-const STATE_SHAPE = 2
+const STATE_SHAPE = 3
 const DATA_VERSION = DEMO.meta.version + STATE_SHAPE
 
 export const EXCEL_ACTOR = "загрузка из excel"
@@ -30,6 +30,9 @@ type DemoData = {
   // Когда последний раз менялась схема (контуры): такие изменения попадают на сайт после публикации
   schemaChangedAt: string | null
   excelImported: boolean
+  // Очереди поселка и понравившиеся покупателю участки (у покупателя они хранятся в браузере)
+  queues: number[]
+  likes: number[]
 }
 
 type DemoState = DemoData & {
@@ -49,6 +52,8 @@ type DemoState = DemoData & {
   updateBilling: (patch: Partial<Pick<Billing, "company" | "inn">>) => void
   createInvoice: () => Invoice
   payInvoice: (id: string) => void
+  addQueue: () => number
+  toggleLike: (id: number) => void
 }
 
 const initialData = (): DemoData =>
@@ -62,6 +67,8 @@ const initialData = (): DemoData =>
     billing: DEMO.billing,
     schemaChangedAt: null,
     excelImported: false,
+    queues: [...new Set(DEMO.plots.map((p) => p.queue))].sort(),
+    likes: [],
   })
 
 const nextId = (items: { id: number }[]) => Math.max(0, ...items.map((i) => i.id)) + 1
@@ -204,6 +211,15 @@ export const useDemo = create<DemoState>()(
           set({ billing: { ...billing, invoices: [...billing.invoices, invoice] } })
           return invoice
         },
+
+        addQueue: () => {
+          const queue = Math.max(0, ...get().queues) + 1
+          set((s) => ({ queues: [...s.queues, queue], schemaChangedAt: nowStamp() }))
+          return queue
+        },
+
+        toggleLike: (id) =>
+          set((s) => ({ likes: s.likes.includes(id) ? s.likes.filter((x) => x !== id) : [...s.likes, id] })),
 
         payInvoice: (id) =>
           set((s) => {

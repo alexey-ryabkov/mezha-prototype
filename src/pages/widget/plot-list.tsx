@@ -4,6 +4,7 @@ import { ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react"
 import type { Plot } from "@/data/types"
 import { formatPrice, formatSotki, plural } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { SWATCH } from "@/components/genplan/status-colors"
 
 // Свободные участки из видимой части плана, которые подходят под фильтр
 export function PlotList({
@@ -12,12 +13,14 @@ export function PlotList({
   onSelect,
   onHover,
   className,
+  title = "На плане",
 }: {
   plots: Plot[]
   withPrice: boolean
   onSelect: (p: Plot) => void
   onHover?: (id: number | null) => void
   className?: string
+  title?: string
 }) {
   const [asc, setAsc] = useState(true)
   const sorted = [...plots].sort((a, b) => (withPrice ? (asc ? a.price - b.price : b.price - a.price) : a.id - b.id))
@@ -26,7 +29,7 @@ export function PlotList({
     <div className={cn("flex flex-col", className)}>
       <div className="flex items-center justify-between gap-2 border-b px-4 py-2.5 text-sm">
         <span className="font-medium">
-          На плане {plots.length} {plural(plots.length, ["участок", "участка", "участков"])}
+          {title} {plots.length} {plural(plots.length, ["участок", "участка", "участков"])}
         </span>
         {withPrice && plots.length > 1 && (
           <button
@@ -54,7 +57,7 @@ export function PlotList({
                 onMouseLeave={() => onHover?.(null)}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-accent/60"
               >
-                <span className="size-2.5 shrink-0 rounded-full bg-free" />
+                <span className={cn("size-2.5 shrink-0 rounded-full border", SWATCH[p.status])} />
                 <span className="font-medium">№ {p.number}</span>
                 <span className="text-muted-foreground">{formatSotki(p.areaM2)}</span>
                 {withPrice && <span className="ml-auto font-medium tabular-nums">{formatPrice(p.price)}</span>}

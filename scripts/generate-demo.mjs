@@ -270,7 +270,8 @@ const leadPlots = [
 const leads = []
 for (let i = 0; i < 13; i++) {
   const recent = i < 9
-  const date = recent ? addDays(TODAY, -int(0, 28)) : addDays(PERIOD_START, int(0, 55))
+  // Свежие заявки за последние 4 недели, остальные в июле, чтобы в отчете за месяц были заявки
+  const date = recent ? addDays(TODAY, -int(0, 26)) : addDays("2026-07-01", int(0, 29))
   leads.push({ at: `${date}T${time()}`, plotId: pick(leadPlots), name: names[i], phone: phone(), comment: comments[i] ?? "" })
 }
 // Заявка на 47 из сценария С-5: сегодня утром

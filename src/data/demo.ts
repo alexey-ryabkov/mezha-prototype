@@ -19,3 +19,6 @@ export const planReady = new Promise<void>((resolve) => {
   img.src = PLAN_IMAGE
 })
 export const isPlanLoaded = () => planLoaded
+
+// Ф-30: где «стоит» покупатель на показе — перекресток Центральной и Ручейной, рядом с участком 47
+export const HERE: [number, number] = [765, 615]

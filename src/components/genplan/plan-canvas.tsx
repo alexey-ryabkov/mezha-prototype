@@ -14,10 +14,13 @@ export function PlanCanvas({
   children,
   className,
   onViewportChange,
+  controls,
 }: {
   children: ReactNode
   className?: string
   onViewportChange?: (v: Viewport) => void
+  // Дополнительные кнопки под кнопками масштаба
+  controls?: ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
   const state = useRef({ scale: 1, positionX: 0, positionY: 0 })
@@ -76,7 +79,10 @@ export function PlanCanvas({
         <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width: "100%" }}>
           {children}
         </TransformComponent>
-        <ZoomButtons />
+        <div className="absolute top-2 right-2 flex flex-col gap-2">
+          <ZoomButtons />
+          {controls}
+        </div>
       </TransformWrapper>
       {!ready && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#EEF1E0] text-sm text-muted-foreground">
@@ -92,7 +98,7 @@ function ZoomButtons() {
   const { zoomIn, zoomOut, resetTransform } = useControls()
   const btn = "flex size-8 items-center justify-center bg-card/90 text-foreground hover:bg-card"
   return (
-    <div className="absolute top-2 right-2 flex flex-col overflow-hidden rounded-md border shadow-sm">
+    <div className="flex flex-col overflow-hidden rounded-md border shadow-sm">
       <button type="button" aria-label="Приблизить" className={btn} onClick={() => zoomIn()}>
         <Plus className="size-4" />
       </button>

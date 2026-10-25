@@ -8,16 +8,22 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { JournalEntry, PlotStatus } from "@/data/types"
 import { formatDateLong, formatDateTime, formatPrice, plural } from "@/lib/format"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useDemo } from "@/store/demo"
 import { StatusLabel } from "./common/status"
 import { PERIODS, periodStart, type Period } from "./period"
 
 const Value = ({ e, v }: { e: JournalEntry; v: JournalEntry["from"] }) =>
-  e.field === "status" ? <StatusLabel status={v as PlotStatus} /> : <span className="tabular-nums">{formatPrice(v as number)}</span>
+  e.field === "status" ? (
+    <StatusLabel status={v as PlotStatus} />
+  ) : (
+    <span className="tabular-nums">{formatPrice(v as number)}</span>
+  )
 
 export function JournalPage() {
   const journal = useDemo((s) => s.journal)
   const plots = useDemo((s) => s.plots)
+  const isMobile = useIsMobile()
   const [q, setQ] = useState("")
   const [period, setPeriod] = useState<Period>("all")
 
@@ -44,7 +50,11 @@ export function JournalPage() {
     { id: "field", header: "Что изменилось", cell: ({ row }) => (row.original.field === "status" ? "Статус" : "Цена") },
     { id: "from", header: "Было", cell: ({ row }) => <Value e={row.original} v={row.original.from} /> },
     { id: "to", header: "Стало", cell: ({ row }) => <Value e={row.original} v={row.original.to} /> },
-    { id: "by", header: "Кто изменил", cell: ({ row }) => <span className="text-muted-foreground">{row.original.by}</span> },
+    {
+      id: "by",
+      header: "Кто изменил",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.by}</span>,
+    },
   ]
 
   return (
@@ -95,7 +105,40 @@ export function JournalPage() {
         </span>
       </div>
 
-      <DataTable columns={columns} data={rows} getRowId={(e) => String(e.id)} initialSorting={[{ id: "at", desc: true }]} empty="Записей нет" />
+      {!isMobile && (
+        <div>
+          <DataTable
+            columns={columns}
+            data={rows}
+            getRowId={(e) => String(e.id)}
+            initialSorting={[{ id: "at", desc: true }]}
+            empty="Записей нет"
+          />
+        </div>
+      )}
+
+      {isMobile && (
+        <ul className="grid gap-2">
+          {[...rows]
+            .sort((a, b) => b.at.localeCompare(a.at) || b.id - a.id)
+            .map((e) => (
+              <li key={e.id} className="grid gap-1.5 rounded-lg border bg-card p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">№ {numberOf(e.plotId)}</span>
+                  <span className="text-muted-foreground tabular-nums">{formatDateTime(e.at)}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-muted-foreground">{e.field === "status" ? "Статус:" : "Цена:"}</span>
+                  <Value e={e} v={e.from} />
+                  <span className="text-muted-foreground">→</span>
+                  <Value e={e} v={e.to} />
+                </div>
+                <div className="text-muted-foreground">{e.by}</div>
+              </li>
+            ))}
+          {!rows.length && <li className="py-8 text-center text-sm text-muted-foreground">Записей нет</li>}
+        </ul>
+      )}
     </div>
   )
 }

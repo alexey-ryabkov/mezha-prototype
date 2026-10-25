@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { CircleCheck } from "lucide-react"
+import { CircleCheck, Heart, Send, Share2 } from "lucide-react"
 
+import { CopyButton } from "@/components/common/copy-button"
 import { ResponsiveSheet } from "@/components/common/responsive-sheet"
 import { SWATCH } from "@/components/genplan/status-colors"
 import { Button } from "@/components/ui/button"
@@ -10,13 +11,22 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { STATUS_LABEL, type Plot } from "@/data/types"
 import { formatM2, formatPrice, formatSotki } from "@/lib/format"
+import { plotLink } from "@/lib/links"
 import { cn } from "@/lib/utils"
 import { useDemo } from "@/store/demo"
 
 type Step = "card" | "form" | "done"
 
 // Карточка участка, форма заявки и сообщение после отправки в одном окне
-export function PlotSheet({ plot, onClose }: { plot: Plot | null; onClose: () => void }) {
+export function PlotSheet({
+  plot,
+  onClose,
+  onSelect,
+}: {
+  plot: Plot | null
+  onClose: () => void
+  onSelect: (id: number) => void
+}) {
   const [step, setStep] = useState<Step>("card")
   const priceMode = useDemo((s) => s.settings.priceMode)
 
@@ -35,7 +45,9 @@ export function PlotSheet({ plot, onClose }: { plot: Plot | null; onClose: () =>
 
   return (
     <ResponsiveSheet open={!!plot} onOpenChange={(o) => !o && close()} title={title}>
-      {plot && step === "card" && <PlotCard plot={plot} hidePrice={priceMode === "after_lead"} onLead={() => setStep("form")} />}
+      {plot && step === "card" && (
+        <PlotCard key={plot.id} plot={plot} hidePrice={priceMode === "after_lead"} onLead={() => setStep("form")} onSelect={onSelect} />
+      )}
       {plot && step === "form" && <LeadForm plot={plot} onBack={() => setStep("card")} onSent={() => setStep("done")} />}
       {plot && step === "done" && (
         <div className="grid justify-items-center gap-3 py-4 text-center">
@@ -52,7 +64,34 @@ export function PlotSheet({ plot, onClose }: { plot: Plot | null; onClose: () =>
   )
 }
 
-function PlotCard({ plot, hidePrice, onLead }: { plot: Plot; hidePrice: boolean; onLead: () => void }) {
+// Ф-29: свободные участки, похожие по площади и цене
+function similarTo(plot: Plot, plots: Plot[]) {
+  return plots
+    .filter((p) => p.status === "free" && p.contour && p.id !== plot.id && Math.abs(p.areaM2 - plot.areaM2) <= plot.areaM2 * 0.2)
+    .map((p) => ({ p, score: Math.abs(p.areaM2 - plot.areaM2) / plot.areaM2 + Math.abs(p.price - plot.price) / plot.price }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3)
+    .map((x) => x.p)
+}
+
+function PlotCard({
+  plot,
+  hidePrice,
+  onLead,
+  onSelect,
+}: {
+  plot: Plot
+  hidePrice: boolean
+  onLead: () => void
+  onSelect: (id: number) => void
+}) {
+  const plots = useDemo((s) => s.plots)
+  const liked = useDemo((s) => s.likes.includes(plot.id))
+  const toggleLike = useDemo((s) => s.toggleLike)
+  const [sharing, setSharing] = useState(false)
+  const link = plotLink(plot.number)
+  const similar = plot.status === "free" ? [] : similarTo(plot, plots)
+
   return (
     <div className="grid gap-4">
       <span className="inline-flex w-fit items-center gap-2 rounded-full border px-2.5 py-0.5 text-sm">
@@ -81,10 +120,56 @@ function PlotCard({ plot, hidePrice, onLead }: { plot: Plot; hidePrice: boolean;
         <dt className="text-muted-foreground">Кадастровый номер</dt>
         <dd className="font-mono text-[13px]">{plot.cadastral}</dd>
       </dl>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={() => setSharing(!sharing)}>
+          <Share2 />
+          Поделиться
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => toggleLike(plot.id)} aria-pressed={liked}>
+          <Heart className={cn(liked && "fill-primary text-primary")} />
+          {liked ? "В понравившихся" : "Нравится"}
+        </Button>
+      </div>
+      {sharing && (
+        <div className="grid gap-2 rounded-md bg-muted/60 p-3">
+          <Input readOnly value={link} className="bg-card font-mono text-xs" onFocus={(e) => e.target.select()} />
+          <div className="flex flex-wrap gap-2">
+            <CopyButton text={link} message="Ссылка на участок скопирована" />
+            {"share" in navigator && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigator.share({ title: `Участок № ${plot.number}`, url: link }).catch(() => {})}
+              >
+                <Send />
+                Отправить
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
       {plot.status === "booked" && (
         <p className="rounded-md bg-booked/20 px-3 py-2 text-sm">
           Участок забронирован. Оставьте заявку, и менеджер сообщит, если бронь снимут.
         </p>
+      )}
+      {similar.length > 0 && (
+        <div className="grid gap-1.5">
+          <div className="text-sm font-medium">Похожие свободные участки</div>
+          {similar.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onSelect(p.id)}
+              className="flex items-center gap-3 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent/60"
+            >
+              <span className={cn("size-2.5 rounded-full border", SWATCH.free)} />
+              <span className="font-medium">№ {p.number}</span>
+              <span className="text-muted-foreground">{formatSotki(p.areaM2)}</span>
+              {!hidePrice && <span className="ml-auto tabular-nums">{formatPrice(p.price)}</span>}
+            </button>
+          ))}
+        </div>
       )}
       {plot.status === "sold" ? (
         <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">Участок продан.</p>

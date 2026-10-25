@@ -1,7 +1,7 @@
 import { useRef, type MouseEvent } from "react"
 
 import { PLAN, PLAN_IMAGE } from "@/data/demo"
-import type { Outline, Plot, PlotStatus } from "@/data/types"
+import type { Outline, Plot, PlotStatus, Point } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { FILL, SWATCH } from "./status-colors"
 
@@ -15,6 +15,7 @@ export function GenplanView({
   onPlotClick,
   outlines,
   onOutlineClick,
+  marker,
 }: {
   plots: Plot[]
   className?: string
@@ -25,6 +26,8 @@ export function GenplanView({
   // Свободные контуры подложки, по которым в редакторе обводят участки
   outlines?: Outline[]
   onOutlineClick?: (outline: Outline) => void
+  // Ф-30: точка «Вы здесь»
+  marker?: Point | null
 }) {
   // Клик после сдвига плана не открывает участок
   const down = useRef<{ x: number; y: number } | null>(null)
@@ -66,6 +69,25 @@ export function GenplanView({
           onClick={(e) => isClick(e) && onOutlineClick?.(o)}
         />
       ))}
+      {marker && (
+        <g pointerEvents="none">
+          <circle
+            cx={marker[0]}
+            cy={marker[1]}
+            r={26}
+            className="animate-ping fill-sky-500/40"
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+          />
+          <circle cx={marker[0]} cy={marker[1]} r={13} className="fill-sky-600 stroke-white stroke-[5]" />
+          <text
+            x={marker[0] + 22}
+            y={marker[1] - 18}
+            className="fill-sky-800 stroke-white stroke-[6] text-[28px] font-semibold [paint-order:stroke]"
+          >
+            Вы здесь
+          </text>
+        </g>
+      )}
     </svg>
   )
 }

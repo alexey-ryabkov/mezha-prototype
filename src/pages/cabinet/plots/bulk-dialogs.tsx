@@ -1,13 +1,18 @@
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { CopyButton } from "@/components/common/copy-button"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { TODAY } from "@/data/demo"
 import { STATUS_LABEL, type PlotStatus } from "@/data/types"
 import { plural } from "@/lib/format"
+import { selectionLink } from "@/lib/links"
+import { addDays } from "@/lib/time"
 import { useDemo } from "@/store/demo"
+import { DEFAULT_BOOKING_DAYS } from "../common/booking"
 import { StatusSelect } from "../common/status"
 
 const plotsWord = (n: number) => `${n} ${plural(n, ["участка", "участков", "участков"])}`
@@ -63,13 +68,38 @@ export function BulkStatusDialog({ ids, open, onDone }: { ids: number[]; open: b
         <DialogFooter>
           <Button
             onClick={() => {
-              updatePlots(ids, () => ({ status }))
+              // Массовая бронь ставится на стандартный срок
+              updatePlots(ids, () =>
+                status === "booked" ? { status, booking: { until: addDays(TODAY, DEFAULT_BOOKING_DAYS), comment: "" } } : { status },
+              )
               toast.success(`Статус ${plotsWord(ids.length)}: ${STATUS_LABEL[status]}`)
               onDone(true)
             }}
           >
             Сменить статус
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// Ф-27: ссылка на подборку отмеченных участков
+export function SelectionDialog({ numbers, open, onDone }: { numbers: string[]; open: boolean; onDone: () => void }) {
+  const link = selectionLink(numbers)
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onDone()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-heading">Подборка участков</DialogTitle>
+          <DialogDescription>
+            По ссылке откроется генплан, где выделены участки {numbers.map((n) => `№ ${n}`).join(", ")}. Ее можно отправить
+            покупателю в мессенджер.
+          </DialogDescription>
+        </DialogHeader>
+        <Input readOnly value={link} className="font-mono text-xs" onFocus={(e) => e.target.select()} />
+        <DialogFooter>
+          <CopyButton text={link} message="Ссылка на подборку скопирована" />
         </DialogFooter>
       </DialogContent>
     </Dialog>

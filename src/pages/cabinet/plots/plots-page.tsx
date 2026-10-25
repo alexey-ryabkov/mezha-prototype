@@ -11,14 +11,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useDemo } from "@/store/demo"
-import { BulkPriceDialog, BulkStatusDialog } from "./bulk-dialogs"
+import { BulkPriceDialog, BulkStatusDialog, SelectionDialog } from "./bulk-dialogs"
 import { ExcelDialog } from "./excel-dialog"
 import { PlotCards } from "./plot-cards"
 import { PlotsTable } from "./plots-table"
 
 export function PlotsPage() {
   const plots = useDemo((s) => s.plots)
+  const isMobile = useIsMobile()
   const [params, setParams] = useSearchParams()
   const q = (params.get("q") ?? "").trim()
   const filtered = plots.filter((p) => p.number.includes(q))
@@ -30,7 +32,7 @@ export function PlotsPage() {
     .map(Number)
     .filter((id) => visibleIds.has(id))
 
-  const [bulk, setBulk] = useState<"price" | "status" | null>(null)
+  const [bulk, setBulk] = useState<"price" | "status" | "share" | null>(null)
   const [excelOpen, setExcelOpen] = useState(false)
 
   const done = (applied: boolean) => {
@@ -63,6 +65,7 @@ export function PlotsPage() {
             <DropdownMenuContent align="start">
               <DropdownMenuItem onSelect={() => setBulk("price")}>Изменить цену на %</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setBulk("status")}>Сменить статус</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setBulk("share")}>Поделиться подборкой</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <span className="text-sm text-muted-foreground">
@@ -75,15 +78,19 @@ export function PlotsPage() {
         </Button>
       </div>
 
-      <div className="hidden md:block">
-        <PlotsTable plots={filtered} selection={selection} onSelectionChange={setSelection} />
-      </div>
-      <div className="md:hidden">
+      {isMobile ? (
         <PlotCards plots={filtered} />
-      </div>
+      ) : (
+        <PlotsTable plots={filtered} selection={selection} onSelectionChange={setSelection} />
+      )}
 
       <BulkPriceDialog ids={selectedIds} open={bulk === "price"} onDone={done} />
       <BulkStatusDialog ids={selectedIds} open={bulk === "status"} onDone={done} />
+      <SelectionDialog
+        numbers={plots.filter((p) => selectedIds.includes(p.id)).map((p) => p.number)}
+        open={bulk === "share"}
+        onDone={() => setBulk(null)}
+      />
       <ExcelDialog open={excelOpen} onOpenChange={setExcelOpen} />
     </div>
   )

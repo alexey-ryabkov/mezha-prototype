@@ -5,9 +5,13 @@ import { ResponsiveSheet } from "@/components/common/responsive-sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TODAY } from "@/data/demo"
 import type { Plot } from "@/data/types"
 import { formatSotki } from "@/lib/format"
+import { addDays } from "@/lib/time"
 import { useDemo } from "@/store/demo"
+import { BookingFields, DEFAULT_BOOKING_DAYS } from "./booking"
 import { StatusSelect } from "./status"
 
 // Карточка участка в кабинете: номер, площадь, цена, статус, кадастровый номер
@@ -22,7 +26,11 @@ export function PlotEditDialog({ plotId, onClose }: { plotId: number | null; onC
 
 function PlotForm({ plot, onSaved }: { plot: Plot; onSaved: () => void }) {
   const updatePlot = useDemo((s) => s.updatePlot)
+  const queues = useDemo((s) => s.queues)
   const [number, setNumber] = useState(plot.number)
+  const [queue, setQueue] = useState(String(plot.queue))
+  const [until, setUntil] = useState(plot.booking?.until ?? addDays(TODAY, DEFAULT_BOOKING_DAYS))
+  const [bookingComment, setBookingComment] = useState(plot.booking?.comment ?? "")
   const [area, setArea] = useState(String(plot.areaM2 || ""))
   const [price, setPrice] = useState(String(plot.price || ""))
   const [status, setStatus] = useState(plot.status)
@@ -43,7 +51,15 @@ function PlotForm({ plot, onSaved }: { plot: Plot; onSaved: () => void }) {
         e.preventDefault()
         setTried(true)
         if (!numberOk || !areaOk || !priceOk) return
-        updatePlot(plot.id, { number: number.trim(), areaM2: areaNum, price: priceNum, status, cadastral: cadastral.trim() })
+        updatePlot(plot.id, {
+          number: number.trim(),
+          queue: Number(queue),
+          areaM2: areaNum,
+          price: priceNum,
+          status,
+          cadastral: cadastral.trim(),
+          booking: status === "booked" ? { until, comment: bookingComment.trim() } : null,
+        })
         toast.success(`Участок № ${number.trim()} сохранен`)
         onSaved()
       }}
@@ -82,10 +98,32 @@ function PlotForm({ plot, onSaved }: { plot: Plot; onSaved: () => void }) {
           />
         </div>
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="plot-cadastral">Кадастровый номер</Label>
-        <Input id="plot-cadastral" value={cadastral} onChange={(e) => setCadastral(e.target.value)} className="font-mono" />
+      <div className="grid grid-cols-[1fr_auto] gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="plot-cadastral">Кадастровый номер</Label>
+          <Input id="plot-cadastral" value={cadastral} onChange={(e) => setCadastral(e.target.value)} className="font-mono" />
+        </div>
+        <div className="grid gap-2">
+          <Label>Очередь</Label>
+          <Select value={queue} onValueChange={setQueue}>
+            <SelectTrigger className="w-28" aria-label="Очередь">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {queues.map((q) => (
+                <SelectItem key={q} value={String(q)}>
+                  {q} очередь
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+      {status === "booked" && (
+        <div className="rounded-lg border border-booked/60 bg-booked/10 p-3">
+          <BookingFields until={until} onUntil={setUntil} comment={bookingComment} onComment={setBookingComment} />
+        </div>
+      )}
       {tried && (!numberOk || !areaOk || !priceOk) && (
         <p className="text-xs text-destructive">Заполните номер, площадь и цену</p>
       )}

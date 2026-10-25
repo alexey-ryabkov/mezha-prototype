@@ -36,7 +36,8 @@ export function ResponsiveSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      {/* Фокус не прыгает в первое поле: на открытой карточке не должно быть выделенного текста */}
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="font-heading">{title}</DialogTitle>
           <DialogDescription className={description ? undefined : "sr-only"}>{description ?? title}</DialogDescription>

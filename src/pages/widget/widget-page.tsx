@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { SlidersHorizontal } from "lucide-react"
+import { RotateCcw, SlidersHorizontal } from "lucide-react"
 
 import { GenplanView, StatusLegend } from "@/components/genplan/genplan-view"
 import { PlanCanvas, type Viewport } from "@/components/genplan/plan-canvas"
@@ -55,7 +55,7 @@ export function WidgetPage() {
         </div>
 
         {/* Фильтры на телефоне */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 lg:hidden">
+        <div className="flex items-center gap-3 border-b px-4 py-2 lg:hidden">
           <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)}>
             <SlidersHorizontal />
             Фильтры
@@ -63,8 +63,8 @@ export function WidgetPage() {
           </Button>
           <span className="text-sm whitespace-nowrap text-muted-foreground">{fits}</span>
           {filter.active && (
-            <Button variant="ghost" size="sm" className="ml-auto px-2" onClick={filter.reset}>
-              Сбросить
+            <Button variant="ghost" size="icon-sm" className="ml-auto" aria-label="Сбросить" title="Сбросить" onClick={filter.reset}>
+              <RotateCcw />
             </Button>
           )}
         </div>

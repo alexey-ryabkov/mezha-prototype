@@ -44,7 +44,7 @@ const GUIDES: { id: string; label: string; steps: string[] }[] = [
 export function EmbedCode() {
   return (
     <div className="grid gap-2">
-      <pre className="overflow-x-auto rounded-md bg-foreground/90 px-3 py-2.5 font-mono text-xs leading-relaxed text-background">
+      <pre className="rounded-md bg-foreground/90 px-3 py-2.5 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap text-background">
         {EMBED_CODE}
       </pre>
       <div>

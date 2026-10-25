@@ -20,7 +20,7 @@ export function DemoMenuPage() {
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Прототип сервиса. Демо-поселок «{VILLAGE.name}» на 75 участков: покупатель выбирает участок на
-        сайте поселка, собственник и менеджер ведут генплан в кабинете.
+        сайте поселка, а девелопер ведет генплан, участки и заявки в своем кабинете.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -29,7 +29,7 @@ export function DemoMenuPage() {
             <Card className="h-full transition group-hover:border-primary/50 group-hover:shadow-md">
               <CardHeader>
                 <item.icon className="mb-2 size-6 text-primary" />
-                <CardTitle className="flex items-center justify-between gap-2 font-heading text-base">
+                <CardTitle className="flex items-center justify-between gap-2 font-heading text-[15px]">
                   {item.label}
                   <ArrowRight className="size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5" />
                 </CardTitle>
@@ -38,6 +38,18 @@ export function DemoMenuPage() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-6 flex flex-col-reverse items-start gap-6 border-t pt-6 sm:flex-row sm:items-center">
+        <img
+          src={`${import.meta.env.BASE_URL}demo-nav-corner.png`}
+          alt="Меню демонстрации в правом нижнем углу экрана"
+          className="w-full shrink-0 rounded-md border sm:w-80"
+        />
+        <p className="text-base text-muted-foreground">
+          Демонстрацией можно управлять через меню в правом нижнем углу экрана: переходить
+          между виджетом и кабинетом и сбрасывать демо-данные.
+        </p>
       </div>
 
       <div className="mt-auto pt-10 text-sm text-muted-foreground">

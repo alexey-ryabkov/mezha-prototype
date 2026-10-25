@@ -28,7 +28,7 @@ export function DemoNav() {
             <Compass className="size-5" />
           </button>
         </PopoverTrigger>
-        <PopoverContent side="top" align="end" className="w-64 gap-0 p-1.5">
+        <PopoverContent side="top" align="end" className="w-[22rem] max-w-[calc(100vw-1.5rem)] gap-0 p-1.5">
           <div className="px-2 pt-1 pb-1.5 text-xs text-muted-foreground">Демонстрация прототипа</div>
           {items.map((item) => (
             <Link

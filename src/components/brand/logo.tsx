@@ -14,7 +14,7 @@ export function MezhaMark({ className }: { className?: string }) {
 
 export function Logo({ className, markClassName }: { className?: string; markClassName?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span data-logo className={cn("inline-flex w-fit items-center gap-2", className)}>
       <MezhaMark className={markClassName} />
       <span className="font-heading text-lg leading-none font-semibold tracking-tight">межа</span>
     </span>

@@ -2,10 +2,10 @@ import { Navigate, useNavigate, useParams } from "react-router"
 
 import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { SUPPORT_EMAIL, USERS, type Role } from "@/data/village"
+import { USERS, type Role } from "@/data/village"
 import { useDemo } from "@/store/demo"
 
 export function LoginPage() {
@@ -25,7 +25,6 @@ export function LoginPage() {
         <CardHeader>
           <Logo className="mb-4" />
           <CardTitle className="font-heading text-lg">Вход в кабинет</CardTitle>
-          <CardDescription>Генпланы поселков, участки и заявки</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -47,9 +46,6 @@ export function LoginPage() {
             <Button type="submit" className="mt-2 w-full">
               Войти
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Доступ выдает поддержка «Межи»: {SUPPORT_EMAIL}
-            </p>
           </form>
         </CardContent>
       </Card>

@@ -1,8 +1,10 @@
+import { DEMO } from "./demo"
+
 export type Role = "owner" | "manager"
 
 export const VILLAGE = {
-  name: "Ольховый ручей",
-  site: "olhovy-ruchey.ru",
+  name: DEMO.village.name,
+  site: DEMO.village.site,
 }
 
 export const SUPPORT_EMAIL = "support@mezha.app"

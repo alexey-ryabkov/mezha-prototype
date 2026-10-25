@@ -1,13 +1,20 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
+import { DEMO } from "@/data/demo"
+import type { Billing, Lead, JournalEntry, Plot, Settings } from "@/data/types"
 import type { Role } from "@/data/village"
 
-// При изменении демо-данных увеличить: сохраненное в браузере состояние сбросится
-const DATA_VERSION = 1
+// Версия берется из демо-данных: после их перегенерации сохраненное в браузере состояние сбросится
+const DATA_VERSION = DEMO.meta.version
 
 type DemoData = {
   user: Role | null
+  plots: Plot[]
+  leads: Lead[]
+  journal: JournalEntry[]
+  settings: Settings
+  billing: Billing
 }
 
 type DemoState = DemoData & {
@@ -16,9 +23,15 @@ type DemoState = DemoData & {
   reset: () => void
 }
 
-const initialData = (): DemoData => ({
-  user: null,
-})
+const initialData = (): DemoData =>
+  structuredClone({
+    user: null,
+    plots: DEMO.plots,
+    leads: DEMO.leads,
+    journal: DEMO.journal,
+    settings: DEMO.settings,
+    billing: DEMO.billing,
+  })
 
 export const useDemo = create<DemoState>()(
   persist(

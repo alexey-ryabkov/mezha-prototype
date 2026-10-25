@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen": "node scripts/generate-demo.mjs",
+    "assets": "node scripts/shoot-assets.mjs"
   },
   "dependencies": {
     "@fontsource-variable/golos-text": "^5.3.0",

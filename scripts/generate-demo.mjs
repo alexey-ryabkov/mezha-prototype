@@ -156,10 +156,15 @@ for (const s of shapes.filter((s) => !s.extra)) {
 }
 const plotById = Object.fromEntries(plots.map((p) => [p.id, p]))
 
-// Контуры участков, которые еще не созданы: их «загружает» excel в кабинете
-const extraContours = shapes
-  .filter((s) => s.extra || NO_CONTOUR.includes(s.number))
-  .map((s) => ({ number: String(s.number), contour: toPx(s.pts), center: toPx([centroid(s.pts)])[0], areaM2: s.area }))
+// Все контуры, нарисованные на подложке. В редакторе по ним «обводят» участки без контура,
+// а участки 76-78 из них «загружает» excel.
+const outlines = shapes.map((s) => ({
+  number: String(s.number),
+  contour: toPx(s.pts),
+  center: toPx([centroid(s.pts)])[0],
+  areaM2: s.area,
+  extra: s.extra,
+}))
 
 // ---------- статусы ----------
 // Около половины продано, привлекательные участки продавались раньше. Несколько броней.
@@ -302,7 +307,7 @@ const data = {
   meta: { today: TODAY, periodStart: PERIOD_START, seed: SEED },
   village: { name: "Ольховый ручей", site: "olhovy-ruchey.ru", plan: { width: px(W), height: px(H), image: "genplan.svg" } },
   plots: plots.map(({ tags, ...p }) => ({ ...p, booking: bookings[p.id] ?? null, tags })),
-  extraContours,
+  outlines,
   leads,
   journal,
   stats: { planShows, plotViews },

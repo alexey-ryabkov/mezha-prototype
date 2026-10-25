@@ -15,3 +15,15 @@ export function plural(n: number, forms: [string, string, string]) {
   if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return forms[1]
   return forms[2]
 }
+
+const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
+const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
+
+// "2026-08-27" -> "27.08.2026"
+export const formatDate = (s: string) => s.slice(0, 10).split("-").reverse().join(".")
+// "2026-08-27T09:14" -> "27.08.2026, 09:14"
+export const formatDateTime = (s: string) => `${formatDate(s)}, ${s.slice(11, 16)}`
+// "2026-08-25" -> "25 августа 2026"
+export const formatDateLong = (s: string) => `${Number(s.slice(8, 10))} ${MONTHS_GEN[Number(s.slice(5, 7)) - 1]} ${s.slice(0, 4)}`
+// "2026-08" -> "август 2026"
+export const formatMonth = (s: string) => `${MONTHS[Number(s.slice(5, 7)) - 1]} ${s.slice(0, 4)}`

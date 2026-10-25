@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { TransformComponent, TransformWrapper, useControls } from "react-zoom-pan-pinch"
-import { Maximize, Minus, Plus } from "lucide-react"
+import { Loader2, Maximize, Minus, Plus } from "lucide-react"
 
-import { PLAN } from "@/data/demo"
+import { isPlanLoaded, PLAN, planReady } from "@/data/demo"
 import { cn } from "@/lib/utils"
 
 // Видимая часть плана в координатах подложки
@@ -21,6 +21,15 @@ export function PlanCanvas({
 }) {
   const box = useRef<HTMLDivElement>(null)
   const state = useRef({ scale: 1, positionX: 0, positionY: 0 })
+  const [ready, setReady] = useState(isPlanLoaded)
+
+  useEffect(() => {
+    let alive = true
+    planReady.then(() => alive && setReady(true))
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const onChange = useRef(onViewportChange)
   useEffect(() => {
@@ -69,6 +78,12 @@ export function PlanCanvas({
         </TransformComponent>
         <ZoomButtons />
       </TransformWrapper>
+      {!ready && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#EEF1E0] text-sm text-muted-foreground">
+          <Loader2 className="size-7 animate-spin text-primary" />
+          Загружаем генплан
+        </div>
+      )}
     </div>
   )
 }

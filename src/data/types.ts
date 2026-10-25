@@ -17,11 +17,13 @@ export type Plot = {
   tags: string[]
 }
 
-export type ExtraContour = {
+// Контур, нарисованный на подложке
+export type Outline = {
   number: string
   contour: Point[]
   center: Point
   areaM2: number
+  extra: boolean
 }
 
 export type Lead = {
@@ -70,7 +72,7 @@ export type DemoJson = {
   meta: { today: string; periodStart: string; seed: number; version: number }
   village: { name: string; site: string; plan: { width: number; height: number; image: string } }
   plots: Plot[]
-  extraContours: ExtraContour[]
+  outlines: Outline[]
   leads: Lead[]
   journal: JournalEntry[]
   stats: { planShows: number[]; plotViews: Record<string, number[]> }

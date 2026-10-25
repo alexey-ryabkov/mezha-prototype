@@ -1,7 +1,7 @@
-import { useRef } from "react"
+import { useRef, type MouseEvent } from "react"
 
 import { PLAN, PLAN_IMAGE } from "@/data/demo"
-import type { Plot, PlotStatus } from "@/data/types"
+import type { Outline, Plot, PlotStatus } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { FILL, SWATCH } from "./status-colors"
 
@@ -13,6 +13,8 @@ export function GenplanView({
   selectedId,
   hoveredId,
   onPlotClick,
+  outlines,
+  onOutlineClick,
 }: {
   plots: Plot[]
   className?: string
@@ -20,9 +22,16 @@ export function GenplanView({
   selectedId?: number | null
   hoveredId?: number | null
   onPlotClick?: (plot: Plot) => void
+  // Свободные контуры подложки, по которым в редакторе обводят участки
+  outlines?: Outline[]
+  onOutlineClick?: (outline: Outline) => void
 }) {
   // Клик после сдвига плана не открывает участок
   const down = useRef<{ x: number; y: number } | null>(null)
+  const isClick = (e: MouseEvent) => {
+    const d = down.current
+    return !d || Math.hypot(e.clientX - d.x, e.clientY - d.y) <= 6
+  }
 
   return (
     <svg
@@ -39,19 +48,24 @@ export function GenplanView({
               data-plot={p.id}
               points={p.contour.map((pt) => pt.join(",")).join(" ")}
               className={cn(
-                "cursor-pointer stroke-2 transition-opacity",
+                "stroke-2 transition-opacity",
+                onPlotClick && "cursor-pointer",
                 FILL[p.status],
                 dimmed?.(p) && "opacity-25",
                 (p.id === selectedId || p.id === hoveredId) && "stroke-foreground stroke-[5] opacity-100",
               )}
-              onClick={(e) => {
-                const d = down.current
-                if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return
-                onPlotClick?.(p)
-              }}
+              onClick={(e) => isClick(e) && onPlotClick?.(p)}
             />
           ),
       )}
+      {outlines?.map((o) => (
+        <polygon
+          key={o.number + o.contour[0].join()}
+          points={o.contour.map((pt) => pt.join(",")).join(" ")}
+          className="cursor-pointer fill-primary/10 stroke-primary stroke-[3] [stroke-dasharray:10_6] hover:fill-primary/35"
+          onClick={(e) => isClick(e) && onOutlineClick?.(o)}
+        />
+      ))}
     </svg>
   )
 }

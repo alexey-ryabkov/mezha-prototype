@@ -3,8 +3,12 @@ import { Navigate, Outlet, Route, Routes } from "react-router"
 import { DemoNav } from "@/components/demo/demo-nav"
 import { CabinetLayout } from "@/pages/cabinet/cabinet-layout"
 import { LoginPage } from "@/pages/cabinet/login-page"
-import { CABINET_SECTIONS } from "@/pages/cabinet/nav"
-import { PlaceholderPage } from "@/pages/cabinet/placeholder-page"
+import { JournalPage } from "@/pages/cabinet/journal-page"
+import { LeadsPage } from "@/pages/cabinet/leads-page"
+import { PlanEditorPage } from "@/pages/cabinet/plan/plan-editor-page"
+import { PlotsPage } from "@/pages/cabinet/plots/plots-page"
+import { ProfilePage } from "@/pages/cabinet/profile/profile-page"
+import { StatsPage } from "@/pages/cabinet/stats-page"
 import { DemoMenuPage } from "@/pages/demo-menu-page"
 import { WidgetPage } from "@/pages/widget/widget-page"
 
@@ -26,9 +30,12 @@ export default function App() {
         <Route path="/login/:role" element={<LoginPage />} />
         <Route path="/cabinet" element={<CabinetLayout />}>
           <Route index element={<Navigate to="plots" replace />} />
-          {CABINET_SECTIONS.map((s) => (
-            <Route key={s.path} path={s.path} element={<PlaceholderPage title={s.label} />} />
-          ))}
+          <Route path="plots" element={<PlotsPage />} />
+          <Route path="plan" element={<PlanEditorPage />} />
+          <Route path="leads" element={<LeadsPage />} />
+          <Route path="stats" element={<StatsPage />} />
+          <Route path="journal" element={<JournalPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -17,12 +17,13 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { USERS, VILLAGE } from "@/data/village"
+import { USERS } from "@/data/village"
 import { useDemo } from "@/store/demo"
 import { CABINET_SECTIONS } from "./nav"
 
 export function CabinetLayout() {
   const user = useDemo((s) => s.user)
+  const village = useDemo((s) => s.village)
   const { pathname } = useLocation()
 
   if (!user) return <Navigate to="/" replace />
@@ -40,7 +41,7 @@ export function CabinetLayout() {
         <header className="flex h-14 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <h1 className="text-base font-semibold">{current?.label}</h1>
-          <span className="ml-auto truncate text-sm text-muted-foreground md:hidden">{VILLAGE.name}</span>
+          <span className="ml-auto truncate text-sm text-muted-foreground md:hidden">{village.name}</span>
         </header>
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
@@ -52,6 +53,7 @@ export function CabinetLayout() {
 
 function CabinetSidebar() {
   const user = useDemo((s) => s.user)!
+  const village = useDemo((s) => s.village)
   const logout = useDemo((s) => s.logout)
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -65,8 +67,8 @@ function CabinetSidebar() {
       <SidebarHeader className="gap-3 px-4 pt-4">
         <Logo />
         <div>
-          <div className="font-heading text-sm font-semibold">{VILLAGE.name}</div>
-          <div className="text-xs text-muted-foreground">{VILLAGE.site}</div>
+          <div className="font-heading text-sm font-semibold">{village.name}</div>
+          <div className="text-xs text-muted-foreground">{village.site}</div>
         </div>
       </SidebarHeader>
       <SidebarContent>
